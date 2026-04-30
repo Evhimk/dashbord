@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Thomas."/>
+<meta name="theme-color" content="#f5f4f0"/>
+<title>Thomas. — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff; --border: #e8e4dc;
+    --borderL: #f0ece4; --text: #1a1a2e; --muted: #8a8a9a;
+    --faint: #c8c4bc; --accent: #e85d26;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: 'DM Mono', 'Courier New', monospace; color: var(--text); overscroll-behavior: none; }
+  ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: #ddd; }
+  input { outline: none; font-family: inherit; } input::placeholder { color: var(--faint); }
+  input[type=number]::-webkit-outer-spin-button, input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .row { transition: background .12s; cursor: pointer; -webkit-user-select: none; user-select: none; }
+  .row:active { opacity: .8; }
+  button { font-family: 'DM Mono', monospace; cursor: pointer; -webkit-user-select: none; user-select: none; }
+  button:active { opacity: .75; }
+  @keyframes fu { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  .fu { animation: fu .22s ease forwards; }
+  /* ── HEADER ── */
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 16px 14px; padding-top: max(16px, env(safe-area-inset-top)); position: sticky; top: 0; z-index: 100; }
+  .header-inner { max-width: 640px; margin: 0 auto; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 2px; color: var(--text); line-height: 1; }
+  .logo span { color: var(--accent); }
+  .sub { font-size: 7px; letter-spacing: 4px; color: var(--faint); margin-top: 2px; }
+  .pct-num { font-family: 'Bebas Neue', sans-serif; font-size: 30px; line-height: 1; }
+  .progress-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 12px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width .5s cubic-bezier(.34,1,.64,1); }
+  .stats-row { display: flex; gap: 8px; margin-top: 12px; }
+  .stat-box { flex: 1; background: var(--bg); border-radius: 8px; padding: 9px 6px; border: 1px solid var(--border); text-align: center; }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; line-height: 1; }
+  .stat-lbl { font-size: 6.5px; letter-spacing: 1.5px; color: var(--faint); margin-top: 4px; line-height: 1.4; }
+  /* ── TABS ── */
+  .tabs-wrap { position: sticky; top: 160px; z-index: 99; background: var(--bg); padding: 10px 16px 0; }
+  .tabs { display: flex; gap: 2px; background: var(--surface); border-radius: 12px; padding: 4px; border: 1px solid var(--border); max-width: 640px; margin: 0 auto; }
+  .tab-btn { flex: 1; padding: 7px 2px; border-radius: 8px; border: 1px solid transparent; font-size: 7.5px; letter-spacing: .5px; line-height: 1.6; background: transparent; color: var(--faint); transition: all .15s; }
+  .tab-btn.active { background: var(--bg); color: var(--text); border-color: var(--border); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  /* ── CONTENT ── */
+  .content { max-width: 640px; margin: 0 auto; padding: 16px 16px 32px; }
+  /* ── HABIT ROW ── */
+  .habit-row { display: flex; align-items: center; gap: 12px; padding: 14px 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 8px; transition: background .12s, border-color .12s; }
+  .habit-row.done { border-color: var(--hc); background: var(--hbg); }
+  .check-circle { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; border: 2px solid var(--faint); display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; transition: all .2s cubic-bezier(.34,1.56,.64,1); }
+  .habit-row.done .check-circle { background: var(--hc); border-color: var(--hc); }
+  .habit-name { flex: 1; font-size: 13px; color: var(--muted); }
+  .habit-row.done .habit-name { color: var(--text); }
+  .done-badge { font-size: 9px; letter-spacing: 2px; color: var(--hc); font-weight: 500; display: none; }
+  .habit-row.done .done-badge { display: block; }
+  /* ── CARDS ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+  .card-title { font-size: 7.5px; letter-spacing: 4px; color: var(--faint); margin-bottom: 14px; }
+  /* ── PERF ── */
+  .perf-val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; }
+  .perf-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 8px 0 4px; }
+  .perf-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
+  .perf-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+  .perf-tag { padding: 3px 10px; background: var(--bg); border-radius: 20px; font-size: 10px; color: var(--muted); border: 1px solid var(--border); }
+  .perf-input-row { display: flex; gap: 8px; }
+  .perf-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 12px; }
+  .log-btn { border: none; border-radius: 8px; padding: 9px 18px; color: #fff; font-size: 10px; letter-spacing: 1px; }
+  /* ── WORKOUT ── */
+  .wcard { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+  .wcard-title { font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 1px; }
+  .wcard-meta { font-size: 7.5px; letter-spacing: 2px; color: var(--faint); margin-top: 2px; }
+  .wcard-desc { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+  .wcard-bar { height: 3px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 12px; }
+  .ex-row { display: flex; align-items: center; gap: 12px; padding: 13px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 8px; }
+  .ex-num { font-family: 'Bebas Neue', sans-serif; font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; color: var(--faint); }
+  .ex-row.done { border-color: var(--ec); background: var(--ebg); }
+  .ex-row.done .ex-num { color: var(--ec); }
+  .ex-name { font-size: 13px; color: var(--text); }
+  .ex-row.done .ex-name { color: var(--faint); text-decoration: line-through; }
+  .ex-detail { font-size: 10px; color: var(--faint); margin-top: 3px; letter-spacing: 1px; }
+  .ex-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--faint); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; flex-shrink: 0; }
+  .ex-row.done .ex-check { background: var(--ec); border-color: var(--ec); }
+  .prog-box { border-radius: 12px; padding: 14px; margin-top: 16px; }
+  .prog-label { font-size: 7.5px; letter-spacing: 3px; margin-bottom: 8px; }
+  .prog-text { font-size: 12px; color: var(--muted); line-height: 1.8; }
+  /* ── WEEK ── */
+  .week-bars { display: flex; justify-content: space-around; align-items: flex-end; height: 80px; }
+  .week-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .week-bar-wrap { width: 65%; background: var(--bg); border-radius: 4px; height: 56px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; border: 1px solid var(--border); }
+  .week-bar-fill { transition: height .4s ease; }
+  .week-lbl { font-size: 8px; }
+  .habit-grid-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; padding: 10px 12px; background: var(--surface); border-radius: 8px; border: 1px solid var(--border); }
+  .grid-dots { display: flex; gap: 4px; }
+  .grid-dot { width: 20px; height: 20px; border-radius: 4px; }
+  /* ── LEARN ── */
+  .learn-row { display: flex; align-items: center; gap: 14px; padding: 13px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 8px; }
+  .learn-row.done { background: #f5f3ff; border-color: #c4b5fd; }
+  .learn-check { width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0; border: 2px solid var(--faint); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; }
+  .learn-row.done .learn-check { background: #7c3aed; border-color: #7c3aed; }
+  .learn-name { flex: 1; font-size: 13px; color: var(--text); }
+  .learn-row.done .learn-name { color: var(--faint); text-decoration: line-through; }
+  .add-input-row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 12px; }
+  .dashed-btn { width: 100%; background: transparent; border: 1px dashed var(--border); border-radius: 10px; padding: 12px; color: var(--faint); font-size: 9px; letter-spacing: 3px; margin-top: 12px; }
+  /* ── NEWS ── */
+  .news-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 14px; }
+  .news-section-header { padding: 11px 15px; border-bottom: 1px solid var(--borderL); display: flex; align-items: center; gap: 8px; }
+  .news-section-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1.5px; }
+  .news-item { padding: 13px 15px; }
+  .news-headline { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
+  .news-summary { font-size: 11px; color: var(--muted); line-height: 1.7; margin-bottom: 8px; }
+  .news-impact { display: flex; align-items: flex-start; gap: 6px; border-radius: 6px; padding: 6px 10px; }
+  .news-impact-text { font-size: 10px; line-height: 1.5; }
+  .news-divider { border: none; border-top: 1px solid var(--borderL); }
+  .mot-box { background: linear-gradient(135deg,rgba(124,58,237,.1),rgba(37,99,235,.07)); border: 1px solid rgba(124,58,237,.25); border-radius: 14px; padding: 16px; margin-top: 4px; }
+  .mot-label { font-size: 7.5px; letter-spacing: 4px; color: #7c3aed; margin-bottom: 10px; }
+  .mot-word { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--text); margin-bottom: 4px; }
+  .mot-def { font-size: 12px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+  .mot-ex { font-size: 11px; color: #7c3aed; font-style: italic; line-height: 1.5; }
+  .skel { background: linear-gradient(90deg,var(--border) 25%,var(--borderL) 50%,var(--border) 75%); background-size: 200% 100%; animation: skel 1.4s infinite; border-radius: 4px; }
+  @keyframes skel { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  /* ── SUCCESS BANNERS ── */
+  .success-banner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; text-align: center; margin-top: 10px; }
+  .success-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #16a34a; letter-spacing: 3px; margin-top: 6px; }
+  /* ── MISC ── */
+  .section-label { font-size: 7.5px; letter-spacing: 4px; color: var(--faint); margin-bottom: 12px; }
+  .back-btn { background: none; border: none; color: var(--faint); font-size: 10px; letter-spacing: 3px; margin-bottom: 16px; padding: 0; }
+  .actu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .actu-sub { font-size: 10px; color: var(--faint); margin-top: 3px; }
+  .reload-btn { border: none; border-radius: 8px; padding: 9px 14px; color: #fff; font-size: 10px; letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
+  .empty-news { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 40px 20px; text-align: center; }
+  .empty-news-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; margin-bottom: 8px; }
+  .empty-news-desc { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+  .start-btn { background: var(--accent); border: none; border-radius: 10px; padding: 12px 24px; color: #fff; font-size: 12px; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <div class="logo">THOMAS<span>.</span></div>
+        <div class="sub">DASHBOARD PERSONNEL</div>
+      </div>
+      <div style="text-align:right">
+        <div class="pct-num" id="pct-display" style="color:var(--accent)">0%</div>
+        <div class="sub" id="count-display">0/7 TÂCHES</div>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="main-progress" style="width:0%;background:linear-gradient(90deg,var(--accent),#f59e0b)"></div>
+    </div>
+    <div class="stats-row" id="stats-row"></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs" id="tabs"></div>
+</div>
+
+<!-- CONTENT -->
+<div id="app-content" style="padding-bottom:env(safe-area-inset-bottom)"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const HABITS = [
+  {id:"d1",name:"Traction / Pompes / Abdos",emoji:"💪",color:"#e85d26"},
+  {id:"d2",name:"Manger sain",emoji:"🥗",color:"#16a34a"},
+  {id:"d3",name:"Lire 30 min",emoji:"📖",color:"#d97706"},
+  {id:"d4",name:"Apprendre quelque chose",emoji:"🧠",color:"#7c3aed"},
+  {id:"d5",name:"Regarder une vidéo culture",emoji:"🎬",color:"#0891b2"},
+  {id:"d6",name:"30 min d'anglais",emoji:"🇬🇧",color:"#2563eb"},
+  {id:"d7",name:"Lire actus éco / crypto",emoji:"📊",color:"#dc2626"},
+];
+const PERFS = [
+  {id:"p1",name:"Pompes",unit:"reps",icon:"🤜",goal:50,color:"#e85d26",tip:"Objectif : 50 d'affilée"},
+  {id:"p2",name:"Tractions",unit:"reps",icon:"⬆️",goal:15,color:"#dc2626",tip:"Objectif : 15 d'affilée"},
+  {id:"p3",name:"Dips",unit:"reps",icon:"⬇️",goal:20,color:"#d97706",tip:"Objectif : 20 d'affilée"},
+  {id:"p4",name:"Planche",unit:"sec",icon:"⏱️",goal:120,color:"#16a34a",tip:"Objectif : 2 min"},
+  {id:"p5",name:"Squats",unit:"reps",icon:"🦵",goal:80,color:"#0891b2",tip:"Objectif : 80 d'affilée"},
+  {id:"p6",name:"Burpees",unit:"reps",icon:"💥",goal:25,color:"#7c3aed",tip:"Objectif : 25 d'affilée"},
+];
+const WORKOUTS = [
+  {id:"w1",name:"Abdos Maison",emoji:"🔥",level:"Intermédiaire",duration:"15 min",color:"#e85d26",desc:"Circuit abdos complet sans matériel — 3 à 4×/semaine",rounds:3,
+   exercises:[{name:"Crunchs",detail:"20 reps",rest:"20s"},{name:"Relevés de jambes",detail:"15 reps",rest:"20s"},{name:"Mountain climbers",detail:"30 sec",rest:"20s"},{name:"Planche frontale",detail:"45 sec",rest:"30s"},{name:"Russian twists",detail:"20 reps (10/côté)",rest:"20s"},{name:"Bicycle crunchs",detail:"20 reps",rest:"30s"}],
+   progression:"Ajoute 2 reps/semaine. Quand tu tiens 3×45s de planche, passe à 60s. Objectif 6 semaines : 3×30 crunchs + 3×60s planche."},
+  {id:"w2",name:"Push — Pompes",emoji:"💪",level:"Progressif",duration:"20 min",color:"#dc2626",desc:"Programme structuré pour atteindre 50 pompes d'affilée",rounds:1,
+   exercises:[{name:"Pompes classiques (max)",detail:"5 séries — repos 2 min",rest:"2 min"},{name:"Pompes serrées (triceps)",detail:"3×10 reps",rest:"90s"},{name:"Pompes larges (pecs)",detail:"3×10 reps",rest:"90s"},{name:"Pompes déclinées",detail:"3×8 reps",rest:"90s"},{name:"Pompes lentes 4-0-4",detail:"2×8 reps",rest:"90s"}],
+   progression:"Note ton max sur la 1ère série chaque semaine. +2 reps/semaine = bonne progression. À 30 max → pompes lestées."},
+  {id:"w3",name:"Pull — Tractions",emoji:"⬆️",level:"Intermédiaire",duration:"20 min",color:"#2563eb",desc:"Progresser vers 15 tractions propres d'affilée",rounds:1,
+   exercises:[{name:"Tractions pronation (max)",detail:"5 séries — repos 2–3 min",rest:"2 min"},{name:"Chin-ups (supination)",detail:"3×max reps",rest:"2 min"},{name:"Tractions australiennes",detail:"3×15 reps",rest:"90s"},{name:"Isométrique en haut",detail:"3×10 sec",rest:"60s"},{name:"Négatifs lents (6 sec)",detail:"3×5 reps",rest:"2 min"}],
+   progression:"< 5 tractions → australiennes + négatifs. 5–10 → ajoute chin-ups. +1/semaine = excellent rythme."},
+  {id:"w4",name:"Full Body Express",emoji:"⚡",level:"Intensif",duration:"25 min",color:"#7c3aed",desc:"Séance corps entier quand le temps manque",rounds:3,
+   exercises:[{name:"Jumping jacks",detail:"60 sec",rest:"0s"},{name:"Pompes",detail:"15 reps",rest:"30s"},{name:"Squats sautés",detail:"15 reps",rest:"30s"},{name:"Tractions (ou australiennes)",detail:"max reps",rest:"60s"},{name:"Burpees",detail:"10 reps",rest:"30s"},{name:"Planche",detail:"45 sec",rest:"30s"}],
+   progression:"Repos 90s entre rounds. Vise 3 rounds sans pause. Puis réduis le repos de 5s/semaine."},
+  {id:"w5",name:"Jambes & Cardio",emoji:"🦵",level:"Débutant+",duration:"20 min",color:"#16a34a",desc:"Renforcement bas du corps et cardio maison",rounds:3,
+   exercises:[{name:"Squats",detail:"20 reps",rest:"30s"},{name:"Fentes alternées",detail:"16 reps (8/jambe)",rest:"30s"},{name:"Squats sumo",detail:"15 reps",rest:"30s"},{name:"Sauts de grenouille",detail:"10 reps",rest:"30s"},{name:"Montées sur pointes",detail:"25 reps",rest:"20s"},{name:"Mountain climbers",detail:"30 sec",rest:"30s"}],
+   progression:"Ajoute du lest (sac à dos) dès que 3 rounds fluides. Objectif : 3 rounds avec 5kg."},
+];
+const LEARNING_DEFAULT = [
+  {id:"l1",name:"Incoterms & logistique internationale",done:false},
+  {id:"l2",name:"Analyse financière (ratios clés)",done:false},
+  {id:"l3",name:"Excel / Power BI avancé",done:false},
+  {id:"l4",name:"Python pour la data",done:false},
+  {id:"l5",name:"Géopolitique & commerce mondial",done:false},
+  {id:"l6",name:"Vocabulaire anglais business",done:false},
+  {id:"l7",name:"Notions de trading & analyse crypto",done:false},
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const S = {
+  tab: 'today',
+  completions: {},
+  perfLogs: {},
+  learning: JSON.parse(JSON.stringify(LEARNING_DEFAULT)),
+  workoutDone: {},
+  activeWorkout: null,
+  news: null, newsDate: null, newsLoading: false, newsError: null,
+  apiKey: null, showApiSetup: false,
+};
+
+function todayKey() { return new Date().toISOString().slice(0,10); }
+function weekDays() {
+  const a=[],t=new Date();
+  for(let i=6;i>=0;i--){const d=new Date(t);d.setDate(t.getDate()-i);a.push(d.toISOString().slice(0,10));}
+  return a;
+}
+function dayLabel(s){return["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"][new Date(s+"T12:00:00").getDay()];}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function load(k,def){try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
+
+function saveApiKey(){
+  const inp=document.getElementById('api-key-input');
+  if(!inp||!inp.value.trim())return;
+  const key=inp.value.trim();
+  localStorage.setItem("th_apikey",key);
+  S.apiKey=key; S.showApiSetup=false;
+  renderContent();
+}
+
+function initState(){
+  S.completions=load("th_comp",{});
+  S.perfLogs=load("th_perf",{});
+  S.learning=load("th_learn",JSON.parse(JSON.stringify(LEARNING_DEFAULT)));
+  S.workoutDone=load("th_wkd",{});
+  const nd=load("th_news",null);
+  if(nd){S.news=nd.data;S.newsDate=nd.date;}
+  S.apiKey=localStorage.getItem("th_apikey")||null;
+}
+
+// ─── HEADER ──────────────────────────────────────────────────────────────────
+function updateHeader(){
+  const tk=todayKey(), tc=S.completions[tk]||{};
+  const cnt=HABITS.filter(h=>tc[h.id]).length;
+  const pct=Math.round(cnt/HABITS.length*100);
+  const pctEl=document.getElementById('pct-display');
+  const cntEl=document.getElementById('count-display');
+  const progEl=document.getElementById('main-progress');
+  pctEl.textContent=pct+'%';
+  pctEl.style.color=pct===100?'#16a34a':'var(--accent)';
+  cntEl.textContent=cnt+'/'+HABITS.length+' TÂCHES';
+  progEl.style.width=pct+'%';
+  progEl.style.background=pct===100?'#16a34a':'linear-gradient(90deg,var(--accent),#f59e0b)';
+
+  const streak=getStreak(), ld=S.learning.filter(i=>i.done).length;
+  const wk=weekDays(), wt=wk.reduce((a,d)=>a+HABITS.filter(h=>(S.completions[d]||{})[h.id]).length,0);
+  const wPct=Math.round(wt/(wk.length*HABITS.length)*100);
+  const bestPompes=getBestEver("p1");
+
+  const stats=[
+    {l:"STREAK",v:streak+"j",c:"#d97706"},
+    {l:"OBJECTIFS",v:ld+"/"+S.learning.length,c:"#7c3aed"},
+    {l:"SEMAINE",v:wPct+"%",c:"#0891b2"},
+    {l:"RECORD 💪",v:bestPompes||"–",c:"var(--accent)"},
+  ];
+  document.getElementById('stats-row').innerHTML=stats.map(s=>`
+    <div class="stat-box">
+      <div class="stat-val" style="color:${s.c}">${s.v}</div>
+      <div class="stat-lbl">${s.l}</div>
+    </div>`).join('');
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+const TABS=[
+  {id:"today",e:"☀️",l:"Jour"},{id:"news",e:"📰",l:"Actu"},
+  {id:"sport",e:"📈",l:"Perf"},{id:"workout",e:"🏋️",l:"Séances"},
+  {id:"week",e:"📅",l:"Semaine"},{id:"learn",e:"🎯",l:"Objectifs"},
+];
+function renderTabs(){
+  document.getElementById('tabs').innerHTML=TABS.map(t=>`
+    <button class="tab-btn${S.tab===t.id?' active':''}" onclick="setTab('${t.id}')">${t.e}<br>${t.l.toUpperCase()}</button>
+  `).join('');
+}
+function setTab(id){
+  S.tab=id; S.activeWorkout=null;
+  renderTabs(); renderContent();
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function getBestEver(mid){
+  let b=0;
+  Object.values(S.perfLogs).forEach(d=>(d[mid]||[]).forEach(v=>{if(v>b)b=v;}));
+  return b;
+}
+function getTodayBest(mid){
+  const a=S.perfLogs[todayKey()]?.[mid]||[];
+  return a.length?Math.max(...a):null;
+}
+function getTodayHistory(mid){return S.perfLogs[todayKey()]?.[mid]||[];}
+function getStreak(){
+  let s=0,d=new Date();
+  while(true){
+    const k=d.toISOString().slice(0,10);
+    if(HABITS.filter(h=>(S.completions[k]||{})[h.id]).length>=4){s++;d.setDate(d.getDate()-1);}else break;
+  }
+  return s;
+}
+
+// ─── TOGGLE HABIT ────────────────────────────────────────────────────────────
+function toggleHabit(id){
+  const k=todayKey();
+  S.completions[k]=S.completions[k]||{};
+  S.completions[k][id]=!S.completions[k][id];
+  save("th_comp",S.completions);
+  updateHeader(); renderContent();
+}
+
+// ─── LOG PERF ────────────────────────────────────────────────────────────────
+function logPerf(mid){
+  const inp=document.getElementById('pi_'+mid);
+  const val=parseInt(inp.value); if(!val||val<=0)return;
+  const k=todayKey();
+  S.perfLogs[k]=S.perfLogs[k]||{};
+  S.perfLogs[k][mid]=S.perfLogs[k][mid]||[];
+  S.perfLogs[k][mid].push(val);
+  save("th_perf",S.perfLogs);
+  inp.value=''; updateHeader(); renderContent();
+}
+
+// ─── TOGGLE LEARNING ─────────────────────────────────────────────────────────
+function toggleLearn(id){
+  const item=S.learning.find(i=>i.id===id);
+  if(item){item.done=!item.done; save("th_learn",S.learning); updateHeader(); renderContent();}
+}
+function addLearn(){
+  const inp=document.getElementById('learn-input');
+  const v=inp.value.trim(); if(!v)return;
+  S.learning.push({id:"l"+Date.now(),name:v,done:false});
+  save("th_learn",S.learning); inp.value='';
+  document.getElementById('learn-add-form').style.display='none';
+  updateHeader(); renderContent();
+}
+function showLearnForm(){document.getElementById('learn-add-form').style.display='flex';}
+function hideLearnForm(){document.getElementById('learn-add-form').style.display='none';}
+
+// ─── WORKOUT ─────────────────────────────────────────────────────────────────
+function openWorkout(id){S.activeWorkout=id;renderContent();}
+function closeWorkout(){S.activeWorkout=null;renderContent();}
+function toggleEx(wId,i){
+  const k=todayKey()+"_"+wId;
+  S.workoutDone[k]=S.workoutDone[k]||{};
+  S.workoutDone[k][i]=!S.workoutDone[k][i];
+  save("th_wkd",S.workoutDone); renderContent();
+}
+
+// ─── NEWS ─────────────────────────────────────────────────────────────────────
+async function loadNews(){
+  S.apiKey=localStorage.getItem("th_apikey")||null;
+  if(!S.apiKey){S.showApiSetup=true;renderContent();return;}
+  S.newsLoading=true; S.newsError=null; renderContent();
+  const today=new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const prompt=`Tu es un assistant d'actualités pour Thomas, étudiant en finance à ESSCA Angers, passionné d'économie, logistique et crypto.\n\nAujourd'hui c'est le ${today}.\n\nGénère un briefing d'actualités structuré en JSON UNIQUEMENT (aucun texte avant ou après, aucun markdown). Format exact :\n{"date":"...","sections":[{"id":"eco","title":"Économie mondiale","emoji":"🌍","color":"#e85d26","items":[{"headline":"...","summary":"...","impact":"..."},{"headline":"...","summary":"...","impact":"..."}]},{"id":"crypto","title":"Crypto & Marchés","emoji":"₿","color":"#d97706","items":[{"headline":"...","summary":"...","impact":"..."},{"headline":"...","summary":"...","impact":"..."}]},{"id":"logistique","title":"Commerce & Logistique","emoji":"🚢","color":"#2563eb","items":[{"headline":"...","summary":"...","impact":"..."},{"headline":"...","summary":"...","impact":"..."}]},{"id":"france","title":"France & Europe","emoji":"🇫🇷","color":"#16a34a","items":[{"headline":"...","summary":"...","impact":"..."},{"headline":"...","summary":"...","impact":"..."}]}],"mot_du_jour":{"word":"mot anglais business","definition":"définition en français","example":"exemple en phrase"}}\n\nSois factuel, précis, adapté à un étudiant en finance. Utilise tes connaissances récentes.`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":S.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,
+        tools:[{type:"web_search_20250305",name:"web_search"}],
+        messages:[{role:"user",content:prompt}]})
+    });
+    const data=await res.json();
+    const fullText=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+    const clean=fullText.replace(/```json|```/g,"").trim();
+    const start=clean.indexOf("{"),end=clean.lastIndexOf("}");
+    const parsed=JSON.parse(clean.slice(start,end+1));
+    S.news=parsed; S.newsDate=todayKey();
+    save("th_news",{date:S.newsDate,data:S.news});
+  }catch(e){
+    S.newsError="Impossible de charger l'actu. Réessaie dans un moment.";
+  }
+  S.newsLoading=false; renderContent();
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderContent(){
+  const el=document.getElementById('app-content');
+  const tk=todayKey(), tc=S.completions[tk]||{};
+  let html='<div class="content fu">';
+
+  // ── TODAY ──
+  if(S.tab==="today"){
+    html+=`<div class="section-label">${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"}).toUpperCase()}</div>`;
+    HABITS.forEach(h=>{
+      const done=!!tc[h.id];
+      html+=`<div class="habit-row${done?' done':''}" style="--hc:${h.color};--hbg:${h.color}18" onclick="toggleHabit('${h.id}')">
+        <div class="check-circle">${done?'✓':''}</div>
+        <span style="font-size:20px">${h.emoji}</span>
+        <span class="habit-name">${h.name}</span>
+        <span class="done-badge">FAIT ✓</span>
+      </div>`;
+    });
+    const cnt=HABITS.filter(h=>tc[h.id]).length;
+    if(cnt===HABITS.length) html+=`<div class="success-banner"><div style="font-size:28px">🏆</div><div class="success-title">JOURNÉE PARFAITE !</div></div>`;
+
+  // ── ACTU ──
+  }else if(S.tab==="news"){
+    if(!S.apiKey||S.showApiSetup){
+      html+=`<div class="empty-news" style="margin-top:8px">
+        <div style="font-size:40px;margin-bottom:12px">🔑</div>
+        <div class="empty-news-title">CLÉ API ANTHROPIC</div>
+        <div class="empty-news-desc">Entre ta clé une seule fois.<br>Sauvegardée uniquement sur ton appareil.</div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <input id="api-key-input" type="password" placeholder="sk-ant-..." style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-size:12px;font-family:inherit"/>
+          <button onclick="saveApiKey()" style="background:var(--accent);border:none;border-radius:8px;padding:11px 18px;color:#fff;font-size:12px;letter-spacing:1px">OK</button>
+        </div>
+        <div style="font-size:10px;color:var(--faint);margin-top:12px">console.anthropic.com/settings/keys</div>
+        ${S.apiKey?`<button onclick="S.showApiSetup=false;renderContent()" style="background:transparent;border:none;color:var(--faint);font-size:11px;margin-top:10px;cursor:pointer;font-family:inherit">← Retour</button>`:''}
+      </div>`;
+    } else {
+    html+=`<div class="actu-header">
+      <div>
+        <div class="section-label" style="margin:0">BRIEFING DU JOUR</div>
+        ${S.newsDate?`<div class="actu-sub">${S.newsDate===todayKey()?'Mis à jour aujourd\'hui':'Dernière MàJ : '+S.newsDate}</div>`:''}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="S.showApiSetup=true;renderContent()" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--faint)">🔑</button>
+        <button class="reload-btn" style="background:${S.newsLoading?'var(--faint)':'var(--accent)'}" onclick="loadNews()" ${S.newsLoading?'disabled':''}>
+          ${S.newsLoading?'⏳ Chargement...':'🔄 Actualiser'}
+        </button>
+      </div>
+    </div>`;
+    if(S.newsError) html+=`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:12px;color:#dc2626">${S.newsError}</div>`;
+    if(S.newsLoading){
+      html+=[1,2,3,4].map(()=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:10px">
+        <div class="skel" style="height:10px;width:40%;margin-bottom:12px"></div>
+        <div class="skel" style="height:8px;width:90%;margin-bottom:8px"></div>
+        <div class="skel" style="height:8px;width:70%"></div>
+      </div>`).join('');
+    }else if(!S.news){
+      html+=`<div class="empty-news">
+        <div style="font-size:40px;margin-bottom:12px">📰</div>
+        <div class="empty-news-title">BRIEFING QUOTIDIEN</div>
+        <div class="empty-news-desc">Reçois chaque jour un résumé personnalisé :<br>économie mondiale, crypto, logistique &amp; commerce, France/Europe<br>+ un mot d'anglais business.</div>
+        <button class="start-btn" onclick="loadNews()">🚀 CHARGER L'ACTU DU JOUR</button>
+      </div>`;
+    }else{
+      (S.news.sections||[]).forEach(sec=>{
+        html+=`<div class="news-card">
+          <div class="news-section-header">
+            <span style="font-size:18px">${sec.emoji}</span>
+            <div class="news-section-title" style="color:${sec.color}">${sec.title}</div>
+          </div>`;
+        (sec.items||[]).forEach((item,idx)=>{
+          html+=`${idx>0?'<hr class="news-divider">':''}
+          <div class="news-item">
+            <div class="news-headline">${item.headline}</div>
+            <div class="news-summary">${item.summary}</div>
+            <div class="news-impact" style="background:${sec.color}18">
+              <span style="font-size:10px;margin-top:1px">💡</span>
+              <div class="news-impact-text" style="color:${sec.color}">${item.impact}</div>
+            </div>
+          </div>`;
+        });
+        html+=`</div>`;
+      });
+      if(S.news.mot_du_jour){
+        const m=S.news.mot_du_jour;
+        html+=`<div class="mot-box">
+          <div class="mot-label">🇬🇧 MOT BUSINESS DU JOUR</div>
+          <div class="mot-word">${m.word}</div>
+          <div class="mot-def">${m.definition}</div>
+          <div class="mot-ex">« ${m.example} »</div>
+        </div>`;
+      }
+    } // end inner else (news loaded)
+    } // end else (apiKey set)
+
+  // ── SPORT ──
+  }else if(S.tab==="sport"){
+    html+=`<div class="section-label">LOGUE TON MEILLEUR RÉSULTAT</div>`;
+    PERFS.forEach(m=>{
+      const tb=getTodayBest(m.id), ae=getBestEver(m.id), hist=getTodayHistory(m.id);
+      const pct=Math.min(((tb||0)/m.goal)*100,100);
+      const isRec=tb!==null&&tb>0&&tb>=ae;
+      html+=`<div class="card" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">${m.icon}</span>
+            <div>
+              <div style="font-size:13px;color:var(--text);font-weight:500">${m.name}</div>
+              <div style="font-size:7.5px;color:var(--faint);letter-spacing:2px;margin-top:2px">${m.tip}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            ${tb!==null?`<div class="perf-val" style="color:${isRec?'#d97706':m.color}">${tb}${isRec?' ★':''}</div>`:''}
+            <div style="font-size:7.5px;color:var(--faint);letter-spacing:1px">RECORD ${ae||'–'} ${m.unit}</div>
+          </div>
+        </div>
+        <div class="perf-bar"><div class="perf-fill" style="width:${pct}%;background:${m.color}"></div></div>
+        <div style="font-size:7.5px;color:var(--faint);margin-bottom:10px;letter-spacing:1px">${Math.round(pct)}% VERS L'OBJECTIF (${m.goal} ${m.unit})</div>
+        ${hist.length?`<div class="perf-tags">${hist.map(v=>`<div class="perf-tag">${v} ${m.unit}</div>`).join('')}</div>`:''}
+        <div class="perf-input-row">
+          <input id="pi_${m.id}" type="number" class="perf-input" placeholder="Résultat en ${m.unit}..." onkeydown="if(event.key==='Enter')logPerf('${m.id}')"/>
+          <button class="log-btn" style="background:${m.color}" onclick="logPerf('${m.id}')">LOG</button>
+        </div>
+      </div>`;
+    });
+    // Mini graph pompes
+    const wk=weekDays();
+    html+=`<div class="card">
+      <div class="card-title">POMPES — ÉVOLUTION 7 JOURS</div>
+      <div class="week-bars">`;
+    wk.forEach(day=>{
+      const arr=S.perfLogs[day]?.p1||[], best=arr.length?Math.max(...arr):0;
+      const isT=day===tk, h=Math.min((best/50)*100,100);
+      html+=`<div class="week-col">
+        <div style="font-size:9px;color:${isT?'var(--accent)':'var(--faint)'}">${best||''}</div>
+        <div class="week-bar-wrap"><div class="week-bar-fill" style="height:${h}%;background:${isT?'var(--accent)':'#ddd'};min-height:${best>0?3:0}px"></div></div>
+        <div class="week-lbl" style="color:${isT?'var(--accent)':'var(--faint)'}">${dayLabel(day)}</div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+
+  // ── WORKOUT LIST ──
+  }else if(S.tab==="workout"&&!S.activeWorkout){
+    html+=`<div class="section-label">PROGRAMMES D'ENTRAÎNEMENT</div>`;
+    WORKOUTS.forEach(w=>{
+      const dk=tk+"_"+w.id, exD=Object.values(S.workoutDone[dk]||{}).filter(Boolean).length;
+      html+=`<div class="wcard" onclick="openWorkout('${w.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;gap:12px;align-items:center">
+            <span style="font-size:26px">${w.emoji}</span>
+            <div>
+              <div class="wcard-title">${w.name}</div>
+              <div class="wcard-meta">${w.level} · ${w.duration}${w.rounds>1?' · '+w.rounds+' ROUNDS':''}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:${w.color}">${exD}/${w.exercises.length}</div>
+            <div style="font-size:7.5px;color:var(--faint)">EXERCICES</div>
+          </div>
+        </div>
+        <div class="wcard-desc">${w.desc}</div>
+        <div class="wcard-bar"><div style="height:100%;background:${w.color};width:${(exD/w.exercises.length)*100}%;transition:width .4s ease"></div></div>
+      </div>`;
+    });
+
+  // ── ACTIVE WORKOUT ──
+  }else if(S.tab==="workout"&&S.activeWorkout){
+    const w=WORKOUTS.find(x=>x.id===S.activeWorkout);
+    const dk=tk+"_"+w.id, em=S.workoutDone[dk]||{}, td=Object.values(em).filter(Boolean).length;
+    html+=`<button class="back-btn" onclick="closeWorkout()">← RETOUR</button>
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:8px">
+      <span style="font-size:32px">${w.emoji}</span>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text);letter-spacing:1px">${w.name}</div>
+        <div style="font-size:7.5px;letter-spacing:3px;color:var(--faint)">${w.level} · ${w.duration}${w.rounds>1?' · '+w.rounds+' ROUNDS':''}</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6">${w.desc}</div>
+    <div style="background:var(--border);border-radius:3px;height:5px;margin-bottom:18px;overflow:hidden">
+      <div style="height:100%;border-radius:3px;background:${w.color};width:${(td/w.exercises.length)*100}%;transition:width .4s ease"></div>
+    </div>`;
+    w.exercises.forEach((ex,i)=>{
+      const done=!!em[i];
+      html+=`<div class="ex-row${done?' done':''}" style="--ec:${w.color};--ebg:${w.color}18" onclick="toggleEx('${w.id}',${i})">
+        <div class="ex-num">${i+1}</div>
+        <div style="flex:1">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-detail">${ex.detail} · repos ${ex.rest}</div>
+        </div>
+        <div class="ex-check">${done?'✓':''}</div>
+      </div>`;
+    });
+    html+=`<div class="prog-box" style="background:${w.color}0d;border:1px solid ${w.color}25">
+      <div class="prog-label" style="color:${w.color}">📈 CONSEIL PROGRESSION</div>
+      <div class="prog-text">${w.progression}</div>
+    </div>`;
+    if(td===w.exercises.length) html+=`<div class="success-banner"><div style="font-size:28px">🏆</div><div class="success-title">SÉANCE COMPLÈTE !</div></div>`;
+
+  // ── SEMAINE ──
+  }else if(S.tab==="week"){
+    const wk=weekDays();
+    html+=`<div class="card">
+      <div class="card-title">TÂCHES — 7 DERNIERS JOURS</div>
+      <div class="week-bars">`;
+    wk.forEach(day=>{
+      const cnt=HABITS.filter(h=>(S.completions[day]||{})[h.id]).length;
+      const isT=day===tk, h=(cnt/HABITS.length)*100;
+      html+=`<div class="week-col">
+        <div style="font-size:9px;color:${isT?'var(--accent)':'var(--faint)'}">${cnt||''}</div>
+        <div class="week-bar-wrap"><div class="week-bar-fill" style="height:${h}%;background:${isT?'var(--accent)':'#ddd'};min-height:${cnt>0?4:0}px"></div></div>
+        <div class="week-lbl" style="color:${isT?'var(--accent)':'var(--faint)'}">${dayLabel(day)}</div>
+      </div>`;
+    });
+    html+=`</div></div><div class="section-label">DÉTAIL PAR HABITUDE</div>`;
+    HABITS.forEach(h=>{
+      html+=`<div class="habit-grid-row">
+        <span style="font-size:15px">${h.emoji}</span>
+        <span style="flex:1;font-size:10px;color:var(--muted)">${h.name}</span>
+        <div class="grid-dots">`;
+      wk.forEach(day=>{
+        const done=!!(S.completions[day]?.[h.id]);
+        html+=`<div class="grid-dot" style="background:${done?h.color:'var(--bg)'};border:1px solid ${done?h.color:'var(--border)'};opacity:${done?1:.45}"></div>`;
+      });
+      html+=`</div></div>`;
+    });
+
+  // ── OBJECTIFS ──
+  }else if(S.tab==="learn"){
+    const ld=S.learning.filter(i=>i.done).length;
+    html+=`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="section-label" style="margin:0">LISTE D'APPRENTISSAGE</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#7c3aed">${ld}/${S.learning.length}</div>
+      </div>
+      <div style="background:var(--border);border-radius:3px;height:5px;overflow:hidden">
+        <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,#7c3aed,#a78bfa);width:${S.learning.length?(ld/S.learning.length)*100:0}%;transition:width .4s ease"></div>
+      </div>
+    </div>`;
+    S.learning.forEach(item=>{
+      html+=`<div class="learn-row${item.done?' done':''}" onclick="toggleLearn('${item.id}')">
+        <div class="learn-check">${item.done?'✓':''}</div>
+        <span class="learn-name">${item.name}</span>
+      </div>`;
+    });
+    html+=`<div id="learn-add-form" class="add-input-row" style="display:none">
+      <input id="learn-input" class="add-input" placeholder="Nouvel objectif..." onkeydown="if(event.key==='Enter')addLearn()"/>
+      <button onclick="addLearn()" style="background:#7c3aed;border:none;border-radius:8px;padding:10px 18px;color:#fff;font-size:12px">+</button>
+      <button onclick="hideLearnForm()" style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--faint)">✕</button>
+    </div>
+    <button class="dashed-btn" onclick="showLearnForm()">+ AJOUTER UN OBJECTIF</button>`;
+  }
+
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+initState();
+updateHeader();
+renderTabs();
+renderContent();
+</script>
+</body>
+</html>
